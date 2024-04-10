@@ -27,20 +27,27 @@ variable "availability_zone" {
   default = "ap-south-1a"
 }
 
+variable "vpc_subnet_cidr_blocks" {
+  type = list(object({
+    cidr_block = string
+    name       = string
+  }))
+}
+
 resource "aws_vpc" "terr_main" {
-  cidr_block = var.aws_vpc_cidr_block
+  cidr_block = var.vpc_subnet_cidr_blocks[0].cidr_block
   tags = {
-    Name : var.vpc_name
+    Name : var.vpc_subnet_cidr_blocks[0].name
   }
 }
 
 
 resource "aws_subnet" "demo_subnet_1" {
   vpc_id            = aws_vpc.terr_main.id
-  cidr_block        = var.aws_subnet_cidr_block
+  cidr_block        = var.vpc_subnet_cidr_blocks[1].cidr_block
   availability_zone = var.availability_zone
   tags = {
-    Name : var.subnet_name
+    Name : var.vpc_subnet_cidr_blocks[1].name
   }
 }
 
