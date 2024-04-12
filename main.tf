@@ -15,6 +15,7 @@ variable "my-ip" {}
 variable "image-name" {}
 variable "instance_type" {}
 variable "public_key_location" {}
+variable "private_key_location" {}
 
 
 
@@ -169,8 +170,32 @@ resource "aws_instance" "myapp-instance" {
   key_name                    = aws_key_pair.my-key-pair.key_name
   availability_zone           = var.availability_zone
 
-  user_data                   = file("entryscript.sh")
-  user_data_replace_on_change = true
+  # user_data                   = file("entryscript.sh")
+  # user_data_replace_on_change = true
+
+
+  connection {
+    type        = "ssh"
+    host        = self.public_ip
+    user        = "ec2-user"
+    private_key = file(var.private_key_location)
+  }
+
+
+  provisioner "file" {
+    source      = "entryscript.sh"
+    destination = "/home/ec2-user/entryscript-on-ec2.sh"
+  }
+
+  provisioner "remote-exec" {
+    inline = ["sudo chmod +x /home/ec2-user/entryscript-on-ec2.sh",
+    "/home/ec2-user/entryscript-on-ec2.sh"] # for this need to copy file  first
+    # script = "entryscript.sh"                         # this will automatically copy file and run it
+  }
+
+  provisioner "local-exec" {
+    command = "echo ${self.public_ip} > ip.txt"
+  }
 
   tags = {
     Name : "${var.env-prefix}-instance"
